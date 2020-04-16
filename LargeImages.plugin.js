@@ -15,7 +15,7 @@ var LargeImages = (() => {
             authors:[
                 { name: 'seymar' }
             ],
-            version: '0.0.1',
+            version: '0.0.2',
             description: 'Show large full resolution images in chats',
             github: 'https://github.com/seymar/LargeImages',
             github_raw: 'https://raw.githubusercontent.com/seymar/LargeImages/master/LargeImages.plugin.js'
@@ -74,7 +74,7 @@ var LargeImages = (() => {
 
             if (img.src == newUrl) return false
             
-            LOG('Image enlarged from/to: ' + (img.src.length - newUrl.length), img.src, newUrl)
+            LOG('Enlarging image', img.src, newUrl)
             img.src = newUrl
         }
     }

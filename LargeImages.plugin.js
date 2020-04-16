@@ -1,53 +1,29 @@
 /**
  * @name LargeImages
  * @invite seymar
- * @authorLink 
+ * @authorLink https://github.com/seymar
  * @donate 
  * @patreon 
- * @website 
- * @source 
+ * @website https://github.com/seymar/LargeImages
+ * @source https://github.com/seymar/LargeImages
  */
-/*@cc_on
-@if (@_jscript)
-	
-	// Offer to self-install for clueless users that try to run this directly.
-	var shell = WScript.CreateObject("WScript.Shell");
-	var fs = new ActiveXObject("Scripting.FileSystemObject");
-	var pathPlugins = shell.ExpandEnvironmentStrings("%APPDATA%\BetterDiscord\plugins");
-	var pathSelf = WScript.ScriptFullName;
-	// Put the user at ease by addressing them in the first person
-	shell.Popup("It looks like you've mistakenly tried to run me directly. \n(Don't do that!)", 0, "I'm a plugin for BetterDiscord", 0x30);
-	if (fs.GetParentFolderName(pathSelf) === fs.GetAbsolutePathName(pathPlugins)) {
-		shell.Popup("I'm in the correct folder already.", 0, "I'm already installed", 0x40);
-	} else if (!fs.FolderExists(pathPlugins)) {
-		shell.Popup("I can't find the BetterDiscord plugins folder.\nAre you sure it's even installed?", 0, "Can't install myself", 0x10);
-	} else if (shell.Popup("Should I copy myself to BetterDiscord's plugins folder for you?", 0, "Do you need some help?", 0x34) === 6) {
-		fs.CopyFile(pathSelf, fs.BuildPath(pathPlugins, fs.GetFileName(pathSelf)), true);
-		// Show the user where to put plugins in the future
-		shell.Exec("explorer " + pathPlugins);
-		shell.Popup("I'm installed!", 0, "Successfully installed", 0x40);
-	}
-	WScript.Quit();
-
-@else@*/
 
 var LargeImages = (() => {
     const config = {
         info: {
-            name: "LargeImages",
+            name: 'LargeImages',
             authors:[
-                { name:"seymar" }
+                { name: 'seymar' }
             ],
-            version: "0.0.1",
-            description: "Show large full resolution images in chats",
-            github: "",
-            github_raw: ""
+            version: '0.0.1',
+            description: 'Show large full resolution images in chats',
+            github: 'https://github.com/seymar/LargeImages',
+            github_raw: 'https://raw.githubusercontent.com/seymar/LargeImages/master/LargeImages.plugin.js'
         },
         changelog: [
-            {title: "Initial version", items: ["Initial version"]}
+            { title: 'Initial version', items: ['Initial version']}
         ],
-        defaultConfig:[
-        ],
+        defaultConfig: [],
         main:"index.js"
     }
 
@@ -90,29 +66,15 @@ var LargeImages = (() => {
 
         observeMessages () {
             // Detect new messages and changes
-            let ignoreList = []
             this.unobserveMessages()
             this.messageObserver = new MutationObserver(mutations => {
-                this.alterAllImages()
-
-                // Change based altering wasn't reliable for some reason
-                /*mutations.forEach(mutation => {
-                    console.log(mutation.type, ignoreList.length)
-                    const elements = [...mutation.addedNodes, mutation.target]
-                    .filter(e => e.nodeName.toLowerCase() == 'img') // Only img
-                    .forEach(e => {
-                        // Check whether the message is currently being altered
-                        // if so, temporarily ignore changes to prevent
-                        // recursive mutations
-                        if (ignoreList.includes(e)) return false
-                        ignoreList.push(e)
-
-                        this.alterImage(e)
-
-                        // Stop ignoring changes of the message
-                        ignoreList.splice(ignoreList.indexOf(e), 1)
-                    })
-                })*/
+                clearTimeout(this.updateTimeout)
+                this.updateTimeout = setTimeout(() => {
+                    if (this.disableObserving) return false
+                    this.disableObserving = true
+                    this.alterAllImages()
+                    this.disableObserving = false
+                }, 25)
             })
             .observe(document.querySelector('div[data-ref-id=messages]'), {
                 // Detect the addition of new messages or images in messages

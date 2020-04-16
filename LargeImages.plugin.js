@@ -23,8 +23,7 @@ var LargeImages = (() => {
         changelog: [
             { title: 'Initial version', items: ['Initial version']}
         ],
-        defaultConfig: [],
-        main:"index.js"
+        defaultConfig: []
     }
 
     const LOG = (msg, ...a) => console.log(`[${config.info.name}] ${msg}`, ...a)
@@ -35,56 +34,26 @@ var LargeImages = (() => {
         getAuthor () { return config.info.authors.map(a => a.name).join(", ") }
         getDescription () { return config.info.description }
         getVersion () { return config.info.version }
+        
         load () {
-            // Initialize for current chat
-            const chat = document.querySelector('div[class*=da-chat]')
-            // Detect switching betweens chats
-            if (!chat) {
-                // No chat to init, retry in a bit
-                setTimeout(load, 1000)
-                return false
-            }
-
-            this.initChat(chat)
-
-            this.chatObserver = new MutationObserver(e => this.initChat(chat))
-            .observe(chat, { attributes: true, childList: true })
+            this.start()
+        }
+        
+        start () {
+            this.updateInterval = setInterval(() => {
+                this.alterAllImages()
+            }, 1000)
+        }
+        stop () {
+            clearInterval(this.updateInterval)
         }
 
-        initChat (chat) {
-            LOG('initChat', chat.querySelector('main').getAttribute('aria-label'))
-            
-            this.unobserveMessages()
-            this.alterAllImages()
-            this.observeMessages()
-        }
-
-        unobserveMessages () {
-            if (this.messageObserver) this.messageObserver.disconnect()
-            LOG('Stopped observing messages')
-        }
-
-        observeMessages () {
-            // Detect new messages and changes
-            this.unobserveMessages()
-            this.messageObserver = new MutationObserver(mutations => {
-                clearTimeout(this.updateTimeout)
-                this.updateTimeout = setTimeout(() => {
-                    if (this.disableObserving) return false
-                    this.disableObserving = true
-                    this.alterAllImages()
-                    this.disableObserving = false
-                }, 25)
+        alterAllImages () {
+            [ ...document.querySelectorAll('a[class*=embedWrapper-]') ].forEach(e => {
+                const img = e.querySelector('img')
+                
+                if (img) this.alterImage(img)
             })
-            .observe(document.querySelector('div[data-ref-id=messages]'), {
-                // Detect the addition of new messages or images in messages
-                childList: true,
-                subtree: true,
-                // Detect image src changes
-                attributes: true,
-                attributeFilter: ['src']
-            })
-            LOG('Started observing messages')
         }
 
         alterImage (img) {
@@ -100,30 +69,13 @@ var LargeImages = (() => {
             img.style.height = ''
             
             // Increase resolution by loading original image
-            const newUrl = img.src
-            .replace(/\?.*/, '') // Remove height/width parameters
-            .replace(/(.*)http/g, 'http') // Extract original url
-            .replace(/http\//, 'http://').replace(/https\//, 'https://') // Fix protocol
+            if (!img.parentNode) return false
+            const newUrl = img.parentNode.getAttribute('href')
 
             if (img.src == newUrl) return false
             
-            LOG('IMG src changes ' + (img.src.length - newUrl.length), img.src, newUrl)
+            LOG('Image enlarged from/to: ' + (img.src.length - newUrl.length), img.src, newUrl)
             img.src = newUrl
-        }
-
-        alterAllImages () {
-            [ ...document.querySelectorAll('a[class*=embedWrapper-]') ].forEach(e => {
-                const img = e.querySelector('img')
-                
-                if (img) this.alterImage(img)
-            })
-        }
-
-        // Unused methods
-        start () {}
-        stop () {
-            this.unobserveMessages()
-            this.chatObserver.disconnect()
         }
     }
 })()
